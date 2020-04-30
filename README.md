@@ -1,53 +1,50 @@
-Opening multiple instances of VLC
----------------------------------
+Launching Multiple Instances of VLC from macOS Finder
+-----------------------------------------------------
 
 Based on: 
-[https://wiki.videolan.org/VLC_HowTo/Play_multiple_instances](https://wiki.videolan.org/VLC_HowTo/Play_multiple_instances)
+[videolan's wiki](https://wiki.videolan.org/VLC_HowTo/Play_multiple_instances)
+
+The above referenced version does not work with later versions of macOS (e.g. Catalina). The below modified version does.
 
 pdanford - April 2020
 
 ---
-#### App Script
+#### AppleScript Script
 
-Running multiple instances of VLC is not supported out of the box.
+Running multiple instances of VLC is not supported out of the box. As a workaround, you can create a AppleScript App that launches separate instances of VLC instead:
 
-As a workaround, you can create a Droplet/App that does the following:
-- launch the VLC droplet/app to get a separate instance of VLC
-- drop one or more files onto VLC droplet/app
-- or associate your .mov, .avi, and other files directly with the VLC droplet/app, allowing you to simply click on the files to launch the files in a new standalone VLC session.
+1. Run Automator, `File -> New` and choose **Application**.
+2. Click `Library -> Utilities` and double click **Run AppleScript**.
+3. Paste the script from [AppleScript](#AppleScript) section below.
+4. Save; if Automator tries to save to iCloud drive, better to save locally - save as **vlc-m.app** to the Desktop and then move it to **~/Library/Services**.
 
-Paste the code below into a new AppleScript Editor script and save it as an application.
+Set up Finder associations with the vlc-m.app:
 
-    on run
-        do shell script "open -n /Applications/VLC.app"
-        tell application "VLC" to activate
-    end run
+1. Open `Finder` and find a video file of interest.
+2. Select the file and do <kbd>command</kbd>+<kbd>i</kbd>.
+3. Under `Open with:`, click the dropdown and select Other - then navigate to where vlc-m.app is saved and select
+4. Click `Change All` button.
+5. If prompted "are you sure", select "Yes".
+6. Repeat the above for each video file extension type for which you want this active.
 
-    on open theFiles
-        repeat with theFile in theFiles
-            do shell script "open -na /Applications/VLC.app " & quote & (POSIX path of theFile) & quote
-        end repeat
-        tell application "VLC" to activate
-    end open
-
-File Association with the Droplet/App can be done as follows:
-
-1. Open `Finder` and find the video file of interest
-2. Right click on the file (assumes you have right click enabled)
-3. Choose `Get Info`
-4. Under `Open with:`, click dropdown and select the VLC droplet/app
-5. Click `Change All` button
-6. If prompted "are you sure", select "Yes".
+Multiple videos can be opened by:
+- drop one or more video files onto vlc-m.app
+- double click on the selected files in Finder to launch the files in a new standalone VLC sessions
+- select multiple video files in Finder and do <kbd>command</kbd>+<kbd>o</kbd>
 
 ---
-#### Command-line
+###### AppleScript
 
-Use the option --no-one-instance.
+    on run {input, parameters}
+        tell application "Finder" to set fileList to (get selection as alias list)
+        openThese(fileList)
+    end run
 
-On \*nix systems you can create background jobs:
+    on openThese(fileList)
+        repeat with theFile in fileList
+            do shell script "open -na /Applications/VLC.app " & quote & (POSIX path of theFile) & quote
+        end repeat
+    end openThese
 
-    vlc --no-one-instance file1.ogg & vlc --no-one-instance file2.ogg
-
-On Windows systems you might use START:
-
-    START "VLC media player - Instance 1" "%PROGRAMFILES%\VideoLAN\VLC\vlc.exe" "--no-one-instance file1.ogg" && START "VLC media player - Instance 2" "%PROGRAMFILES%\VideoLAN\VLC\vlc.exe" "--no-one-instance file2.ogg"
+---
+:scroll: [MIT License](README.license)
